@@ -1,0 +1,72 @@
+# Base NAMD configuration for ubiquitin Langevin thermostat runs.
+# The periodic box is fixed at 60 A per side to match the provided
+# ionized.pdb file (CRYST1 record and coordinate extents near +/-30 A).
+
+if {![info exists output]} {
+    set output run_gamma5
+}
+if {![info exists gamma]} {
+    set gamma 5.0
+}
+if {![info exists temperature]} {
+    set temperature 300
+}
+if {![info exists num_steps]} {
+    set num_steps 50000
+}
+
+# --- Input files ---
+structure           ionized.psf
+coordinates         ionized.pdb
+temperature         $temperature
+
+# --- Force field parameters ---
+paraTypeCharmm      on
+parameters          par_all36_prot.prm
+parameters          toppar_water_ions.str
+
+# --- Output ---
+outputName          $output
+restartName         ${output}_restart
+dcdFile             ${output}.dcd
+dcdFreq             500
+outputEnergies      100
+restartFreq         1000
+xstFreq             1000
+
+# --- Basic dynamics ---
+timestep            2.0
+rigidBonds          all
+nonbondedFreq       1
+fullElectFrequency  2
+
+# --- Force field setup ---
+exclude             scaled1-4
+oneFourScaling      1.0
+cutoff              12.0
+switching           on
+switchdist          10.0
+pairlistdist        14.0
+stepspercycle       10
+
+# --- Periodic boundary conditions ---
+cellBasisVector1    60.0  0.0   0.0
+cellBasisVector2    0.0   60.0  0.0
+cellBasisVector3    0.0   0.0   60.0
+cellOrigin          0.0   0.0   0.0
+wrapAll             on
+
+# --- PME electrostatics ---
+PME                 yes
+PMEGridSpacing      1.0
+
+# --- Temperature control: Langevin thermostat ---
+langevin            on
+langevinTemp        $temperature
+langevinDamping     $gamma
+langevinHydrogen    off
+
+# --- Initialization ---
+minimize            1000
+reinitvels          $temperature
+run                 $num_steps

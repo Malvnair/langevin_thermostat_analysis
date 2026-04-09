@@ -1,0 +1,3 @@
+set output run_gamma5
+set gamma 5.0
+source ubiquitin_langevin_base.namd
